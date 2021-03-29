@@ -39,13 +39,12 @@ class ConvertKit_Wishlist_Integration {
 		$api_key         = $general_options && array_key_exists( 'api_key', $general_options ) ? $general_options['api_key'] : null;
 		$api_secret      = $general_options && array_key_exists( 'api_secret', $general_options ) ? $general_options['api_secret'] : null;
 		$debug           = $general_options && array_key_exists( 'debug', $general_options ) ? $general_options['debug'] : null;
-		$this->api       = new ConvertKit_API( $api_key,$api_secret,$debug );
+		$this->api       = new ConvertKit_API( $api_key, $api_secret, $debug );
 
 		// When a user has levels added or registers check for a mapping to a ConvertKit form.
 		add_action( 'wishlistmember_add_user_levels', array( $this, 'add_user_levels' ), 10, 2 );
 
-		// When a user has levels removed check for a mapping to a ConvertKit tag, or if the subscriber
-		// should be removed from ConvertKit.
+		// When a user has levels removed check for a mapping to a ConvertKit tag, or if the subscriber should be removed from ConvertKit.
 		add_action( 'wishlistmember_remove_user_levels', array( $this, 'remove_user_levels' ), 10, 2 );
 	}
 
@@ -83,14 +82,14 @@ class ConvertKit_Wishlist_Integration {
 		$member = $this->get_member( $member_id );
 
 		foreach ( $levels as $wlm_level_id ) {
-			// get the mapping if it is set
+			// Get the mapping if it is set.
 			$unsubscribe = ( isset( $this->options[ $wlm_level_id . '_unsubscribe' ] ) ) ? $this->options[ $wlm_level_id . '_unsubscribe' ] : 0;
 
 			if ( $unsubscribe && 'unsubscribe' === $unsubscribe ) {
-				// If mapping is set to "Unsubscribe from all"
+				// If mapping is set to "Unsubscribe from all".
 				$this->member_resource_unsubscribe( $member );
 			} elseif ( $unsubscribe ) {
-				// If mapping is a positive integer then tag customer
+				// If mapping is a positive integer then tag customer.
 				$this->member_tag( $member, $this->options[ $wlm_level_id . '_unsubscribe' ] );
 			}
 		}
@@ -117,7 +116,7 @@ class ConvertKit_Wishlist_Integration {
 		return $this->api->form_subscribe(
 			$form_id,
 			array(
-			'email' => $email,
+				'email' => $email,
 				'name'  => $member['display_name'],
 			)
 		);
@@ -126,8 +125,8 @@ class ConvertKit_Wishlist_Integration {
 	/**
 	 * Unsubscribes a member from a ConvertKit resource
 	 *
-	 * @param  array  $member  UserInfo from WishList Member.
-	 * @param  string $form_id ConvertKit form id.
+	 * @param array $member UserInfo from WishList Member.
+	 *
 	 * @return object Response object from API
 	 */
 	public function member_resource_unsubscribe( $member ) {
@@ -141,9 +140,10 @@ class ConvertKit_Wishlist_Integration {
 	/**
 	 * Tag a member
 	 *
-	 * @param  array  $member  UserInfo from WishList Member
-	 * @param  string $tag     ConvertKit Tag ID
-	 * @return object          Response object from API
+	 * @param  array  $member  UserInfo from WishList Member.
+	 * @param  string $tag     ConvertKit Tag ID.
+	 *
+	 * @return object          Response object from API.
 	 */
 	public function member_tag( $member, $tag ) {
 		return $this->api->add_tag(

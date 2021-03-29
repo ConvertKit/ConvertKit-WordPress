@@ -64,7 +64,7 @@ class ConvertKit_Settings_Wishlist extends ConvertKit_Settings_Base {
 			add_settings_field(
 				sprintf( '%s_title', $wlm_level['id'] ),
 				__( 'WishList Membership Level', 'convertkit' ),
-				array( $this, 'wlm_title_callback' ) ,
+				array( $this, 'wlm_title_callback' ),
 				$this->settings_key,
 				$this->name,
 				array(
@@ -104,8 +104,9 @@ class ConvertKit_Settings_Wishlist extends ConvertKit_Settings_Base {
 	 * Prints help info for this section
 	 */
 	public function print_section_info() {
-		?><p><?php esc_html_e( ' ConvertKit seamlessly integrates with WishList Member to let you capture all of your WishList Membership registrations within your ConvertKit forms.', 'convertkit' );
-		?></p><?php
+		?>
+			<p><?php esc_html_e( ' ConvertKit seamlessly integrates with WishList Member to let you capture all of your WishList Membership registrations within your ConvertKit forms.', 'convertkit' ); ?></p>
+		<?php
 	}
 
 	/**
@@ -177,17 +178,18 @@ class ConvertKit_Settings_Wishlist extends ConvertKit_Settings_Base {
 	}
 
 	/**
-	 * CK Form select for WishList Membership Level
+	 * CK Form select for WishList Membership Level.
 	 *
 	 * @param array $arguments Arguments from add_settings_field().
 	 * @return string Select element.
 	 */
 	public function wlm_level_callback( $arguments ) {
 		$wlm_level_id = $arguments['wlm_level_id'];
-		$forms  = $arguments['forms'];
+		$forms        = $arguments['forms'];
 
-		$html = sprintf( '<select id="%1$s_%2$s_form" name="%1$s[%2$s_form]">', $this->settings_key, $wlm_level_id );
+		$html  = sprintf( '<select id="%1$s_%2$s_form" name="%1$s[%2$s_form]">', $this->settings_key, $wlm_level_id );
 		$html .= '<option value="default">' . __( 'None', 'convertkit' ) . '</option>';
+
 		foreach ( $forms as $form ) {
 			$html .= sprintf(
 				'<option value="%s" %s>%s</option>',
@@ -196,6 +198,7 @@ class ConvertKit_Settings_Wishlist extends ConvertKit_Settings_Base {
 				esc_html( $form['name'] )
 			);
 		}
+
 		$html .= '</select>';
 
 		return $html;
@@ -209,10 +212,11 @@ class ConvertKit_Settings_Wishlist extends ConvertKit_Settings_Base {
 	 */
 	public function wlm_unsubscribe_callback( $arguments ) {
 		$wlm_level_id = $arguments['wlm_level_id'];
-		$tags = $arguments['tags'];
+		$tags         = $arguments['tags'];
 
-		$html = sprintf( '<select id="%1$s_%2$s_form" name="%1$s[%2$s_unsubscribe]">', $this->settings_key, $wlm_level_id );
+		$html  = sprintf( '<select id="%1$s_%2$s_form" name="%1$s[%2$s_unsubscribe]">', $this->settings_key, $wlm_level_id );
 		$html .= '<option value="0">' . __( 'None', 'convertkit' ) . '</option>';
+
 		foreach ( $tags as $tag ) {
 			$html .= sprintf(
 				'<option value="%s" %s>%s</option>',
@@ -221,6 +225,7 @@ class ConvertKit_Settings_Wishlist extends ConvertKit_Settings_Base {
 				esc_html( 'Tag: ' . $tag['name'] )
 			);
 		}
+
 		$html .= '<option value="unsubscribe">' . __( 'Unsubscribe from all', 'convertkit' ) . '</option>';
 		$html .= '</select>';
 
@@ -235,12 +240,13 @@ class ConvertKit_Settings_Wishlist extends ConvertKit_Settings_Base {
 	 */
 	public function sanitize_settings( $input ) {
 		// Settings page can be paginated; combine input with existing options.
-		// If saved options are not an array, start fresh. Fixes rogue saved options
+		// If saved options are not an array, start fresh. Fixes rogue saved options.
 		$output = is_array( $this->options ) ? $this->options : array();
 
 		foreach ( $input as $key => $value ) {
 			$output[ $key ] = sanitize_text_field( $value );
 		}
+
 		$sanitize_filter = 'sanitize' . $this->settings_key;
 
 		return apply_filters( $sanitize_filter, $output, $input );

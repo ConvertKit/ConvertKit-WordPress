@@ -64,15 +64,15 @@ class CK_Widget_Form extends WP_Widget {
 		$this->widget_id          = 'convertkit_form';
 		$this->widget_name        = __( 'ConvertKit Form', 'convertkit' );
 
-		$forms                    = get_option( 'convertkit_forms', array() );
+		$forms = get_option( 'convertkit_forms', array() );
 
-		$this->settings           = array(
-			'title'  => array(
+		$this->settings = array(
+			'title' => array(
 				'type'  => 'text',
 				'std'   => __( 'ConvertKit Form', 'convertkit' ),
 				'label' => __( 'Title', 'convertkit' ),
 			),
-			'form' => array(
+			'form'  => array(
 				'type'    => 'select',
 				'std'     => '',
 				'label'   => __( 'Form', 'convertkit' ),
@@ -81,8 +81,8 @@ class CK_Widget_Form extends WP_Widget {
 		);
 
 		$widget_ops = array(
-			'classname'   => $this->widget_cssclass,
-			'description' => $this->widget_description,
+			'classname'                   => $this->widget_cssclass,
+			'description'                 => $this->widget_description,
 			'customize_selective_refresh' => true,
 		);
 
@@ -132,19 +132,20 @@ class CK_Widget_Form extends WP_Widget {
 		$forms   = get_option( 'convertkit_forms' );
 
 		if ( isset( $forms[ $form_id ]['uid'] ) ) {
-			// new form
+			// New form.
 			$this->widget_start( $args, $instance );
 			$tag = '<script async data-uid="' . $forms[ $form_id ]['uid'] . '" src="' . $forms[ $form_id ]['embed_js'] . '"></script>';
 			echo $tag;
 			$this->widget_end( $args );
 		} else {
-			// old form
-            $url = add_query_arg( array(
-                    'api_key' => WP_ConvertKit::get_api_key(),
-                    'v'       => WP_ConvertKit::get_forms_version(),
-                ),
-                'https://forms.convertkit.com/' . $form_id . '.html'
-            );
+			// Old form.
+			$url = add_query_arg(
+				array(
+					'api_key' => WP_ConvertKit::get_api_key(),
+					'v'       => WP_ConvertKit::get_forms_version(),
+				),
+				'https://forms.convertkit.com/' . $form_id . '.html'
+			);
 
 			$form_markup = $api->get_resource( $url );
 
@@ -181,7 +182,7 @@ class CK_Widget_Form extends WP_Widget {
 
 			switch ( $setting['type'] ) {
 
-				case 'text' :
+				case 'text':
 					?>
 					<p>
 						<label for="<?php echo $this->get_field_id( $key ); ?>"><?php echo $setting['label']; ?></label>
@@ -190,7 +191,7 @@ class CK_Widget_Form extends WP_Widget {
 					<?php
 					break;
 
-				case 'number' :
+				case 'number':
 					?>
 					<p>
 						<label for="<?php echo $this->get_field_id( $key ); ?>"><?php echo $setting['label']; ?></label>
@@ -199,16 +200,14 @@ class CK_Widget_Form extends WP_Widget {
 					<?php
 					break;
 
-				case 'select' :
+				case 'select':
 					if ( empty( $setting['options'] ) ) {
-						$query_args = array(
-							'page' => WP_ConvertKit::SETTINGS_PAGE_SLUG,
-						);
+						$query_args        = array( 'page' => WP_ConvertKit::SETTINGS_PAGE_SLUG );
 						$settings_page_url = add_query_arg( $query_args, admin_url( 'options-general.php' ) );
 						?>
-						<p><?php echo __( 'No forms were returned from ConvertKit.','convertkit' ); ?></p>
+						<p><?php echo __( 'No forms were returned from ConvertKit.', 'convertkit' ); ?></p>
 						<?php /* translators: 1: settings page url */ ?>
-						<p><?php echo sprintf( __( 'Please check the <a href="%s">settings</a>.','convertkit' ), $settings_page_url ); ?></p>
+						<p><?php echo sprintf( __( 'Please check the <a href="%s">settings</a>.', 'convertkit' ), $settings_page_url ); ?></p>
 						<?php
 					} else {
 						?>
@@ -228,7 +227,7 @@ class CK_Widget_Form extends WP_Widget {
 					}
 					break;
 
-				case 'textarea' :
+				case 'textarea':
 					?>
 					<p>
 						<label for="<?php echo $this->get_field_id( $key ); ?>"><?php echo $setting['label']; ?></label>
@@ -240,7 +239,7 @@ class CK_Widget_Form extends WP_Widget {
 					<?php
 					break;
 
-				case 'checkbox' :
+				case 'checkbox':
 					?>
 					<p>
 						<input class="checkbox <?php echo esc_attr( $class ); ?>" id="<?php echo esc_attr( $this->get_field_id( $key ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $key ) ); ?>" type="checkbox" value="1" <?php checked( $value, 1 ); ?> />
@@ -248,8 +247,8 @@ class CK_Widget_Form extends WP_Widget {
 					</p>
 					<?php
 					break;
-			} // End switch().
-		} // End foreach().
+			}
+		}
 	}
 
 	/**
@@ -276,7 +275,7 @@ class CK_Widget_Form extends WP_Widget {
 
 			// Format the value based on settings type.
 			switch ( $setting['type'] ) {
-				case 'number' :
+				case 'number':
 					$instance[ $key ] = absint( $new_instance[ $key ] );
 
 					if ( isset( $setting['min'] ) && '' !== $setting['min'] ) {
@@ -287,10 +286,10 @@ class CK_Widget_Form extends WP_Widget {
 						$instance[ $key ] = min( $instance[ $key ], $setting['max'] );
 					}
 					break;
-				case 'textarea' :
+				case 'textarea':
 					$instance[ $key ] = wp_kses( trim( wp_unslash( $new_instance[ $key ] ) ), wp_kses_allowed_html( 'post' ) );
 					break;
-				case 'checkbox' :
+				case 'checkbox':
 					$instance[ $key ] = empty( $new_instance[ $key ] ) ? 0 : 1;
 					break;
 				default:

@@ -12,21 +12,29 @@ class WP_ConvertKit {
 	const SETTINGS_PAGE_SLUG = '_wp_convertkit_settings';
 
 	/**
+	 * ConvertKit_API instance.
+	 *
 	 * @var ConvertKit_API
 	 */
 	private static $api;
 
 	/**
-	 * @var int Data Caching
+	 * Data caching length.
+	 *
+	 * @var int
 	 */
 	private static $cache_period = 0;
 
 	/**
+	 * Default meta values relating to forms and landing pages on posts.
+	 *
 	 * @var null
 	 */
 	private static $meta_defaults = null;
 
 	/**
+	 * Default plugin settings.
+	 *
 	 * @var array
 	 */
 	private static $settings_defaults = array(
@@ -38,18 +46,28 @@ class WP_ConvertKit {
 	);
 
 	/**
+	 * Forms markup.
+	 *
 	 * @var array
 	 */
 	private static $forms_markup = array();
 
-	/** @var array  */
+	/**
+	 * Landing pages markup.
+	 *
+	 * @var array
+	 */
 	private static $landing_pages_markup = array();
 
-	/** @var string  */
+	/**
+	 * Forms version.
+	 *
+	 * @var string
+	 */
 	private static $forms_version = '6';
 
 	/**
-	 * Initialize the class
+	 * Initialize the class.
 	 */
 	public static function init() {
 		self::add_actions();
@@ -62,7 +80,7 @@ class WP_ConvertKit {
 	}
 
 	/**
-	 * Add WP Actions
+	 * Add WP actions.
 	 */
 	private static function add_actions() {
 		add_action( 'plugins_loaded', array( __CLASS__, 'load_textdomain' ) );
@@ -80,18 +98,18 @@ class WP_ConvertKit {
 
 		add_action( 'save_post', array( __CLASS__, 'save_post_meta' ), 10, 2 );
 
-		add_action( 'init', array( __CLASS__, 'upgrade' ) , 10 );
+		add_action( 'init', array( __CLASS__, 'upgrade' ), 10 );
 	}
 
 	/**
-	 * Load plugin textdomain
+	 * Load plugin textdomain.
 	 */
 	public static function load_textdomain() {
 		load_plugin_textdomain( 'convertkit', false, basename( dirname( __FILE__ ) ) . '/languages/' );
 	}
 
 	/**
-	 * Add WP Filters
+	 * Add WP Filters.
 	 */
 	private static function add_filters() {
 		if ( ! is_admin() ) {
@@ -102,16 +120,16 @@ class WP_ConvertKit {
 	}
 
 	/**
-	 * Register ConvertKit shortcodes
+	 * Register ConvertKit shortcodes.
 	 */
 	private static function register_shortcodes() {
 		add_shortcode( 'convertkit', array( __CLASS__, 'shortcode' ) );
 	}
 
 	/**
-	 * Plugin action links callback
+	 * Plugin action links callback.
 	 *
-	 * @param $links
+	 * @param array $links Existing plugin action links.
 	 * @return array
 	 */
 	public static function add_settings_page_link( $links ) {
@@ -132,30 +150,39 @@ class WP_ConvertKit {
 	/**
 	 * Metabox callback
 	 *
-	 * @param $post
+	 * @param WP_Post $post The current post.
 	 */
 	public static function display_meta_box( $post ) {
 
-		$forms = get_option( 'convertkit_forms' );
+		$forms         = get_option( 'convertkit_forms' );
 		$landing_pages = get_option( 'convertkit_landing_pages' );
-		$tags = get_option( 'convertkit_tags' );
+		$tags          = get_option( 'convertkit_tags' );
 
 		/**
-		 * Alphabetize
+		 * Alphabetize.
 		 */
-		usort( $forms, function( $a, $b ) {
-			return strcmp( $a['name'], $b['name'] );
-		});
+		usort(
+			$forms,
+			function( $a, $b ) {
+				return strcmp( $a['name'], $b['name'] );
+			}
+		);
 
-		usort( $landing_pages, function( $a, $b ) {
-			return strcmp( $a['name'], $b['name'] );
-		});
+		usort(
+			$landing_pages,
+			function( $a, $b ) {
+				return strcmp( $a['name'], $b['name'] );
+			}
+		);
 
-		usort( $tags, function( $a, $b ) {
-			return strcmp( $a['name'], $b['name'] );
-		});
+		usort(
+			$tags,
+			function( $a, $b ) {
+				return strcmp( $a['name'], $b['name'] );
+			}
+		);
 
-		$meta = self::_get_meta( $post->ID );
+		$meta          = self::_get_meta( $post->ID );
 		$settings_link = self::_get_settings_page_link();
 
 		include( CONVERTKIT_PLUGIN_PATH . '/views/backend/meta-boxes/meta-box.php' );
@@ -174,25 +201,33 @@ class WP_ConvertKit {
 			|| ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wp-convertkit-save-meta-nonce'] ) ), 'wp-convertkit-save-meta' ) ) { // WPCS input var okay.
 			return;
 		}
+
 		if ( isset( $_POST['wp-convertkit'] ) ) { // WPCS input var okay.
+
 			$form = '';
+
 			if ( isset( $_POST['wp-convertkit']['form'] ) ) { // WPCS input var okay.
 				$form = sanitize_text_field( wp_unslash( $_POST['wp-convertkit']['form'] ) ); // WPCS input var okay.
 			}
+
 			$landing_page = '';
+
 			if ( isset( $_POST['wp-convertkit']['landing_page'] ) ) { // WPCS input var okay.
 				$landing_page = sanitize_text_field( wp_unslash( $_POST['wp-convertkit']['landing_page'] ) ); // WPCS input var okay.
 			}
+
 			$tag = '';
+
 			if ( isset( $_POST['wp-convertkit']['tag'] ) ) { // WPCS input var okay.
 				$tag = sanitize_text_field( wp_unslash( $_POST['wp-convertkit']['tag'] ) ); // WPCS input var okay.
 			}
 
 			$meta = array(
-				'form' => $form,
+				'form'         => $form,
 				'landing_page' => $landing_page,
-				'tag' => $tag,
+				'tag'          => $tag,
 			);
+
 			update_post_meta( $post_id, self::POST_META_KEY, $meta );
 		}
 	}
@@ -229,9 +264,10 @@ class WP_ConvertKit {
 	}
 
 	/**
-	 * @param  integer  $post_id
-	 * @param  string  $settings_key  The settings key used for the post type on the ConvertKit plugin settings page
-	 *                             Usually of the form {post_type_name}_form
+	 * Get the ConvertKit form set for the given post.
+	 *
+	 * @param integer $post_id WordPress post ID.
+	 * @param string  $settings_key The settings key used for the post type on the ConvertKit plugin settings page. Usually of the form {post_type_name}_form.
 	 *
 	 * @return string
 	 */
@@ -239,17 +275,16 @@ class WP_ConvertKit {
 		$form       = '';
 		$attributes = self::_get_meta( $post_id );
 
-		// Get post/page form setting
-		// If post form id is 0, then it's "None", and we need to stop here completely
+		// Get post/page form setting.
+		// If post form id is 0, then it's "None", and we need to stop here completely.
 		if ( isset( $attributes['form'] ) && ( 0 <= $attributes['form'] ) ) {
 			$form_id = $attributes['form'];
 		} else {
-			// Get category form
+			// Get category form.
 			$form_id = self::get_category_form( $post_id );
 
-
 			if ( 0 === $form_id || 'default' === $form_id ) {
-				// Get default form for post type
+				// Get default form for post type.
 				if ( '-1' === $attributes['form'] ) {
 					$form_id = self::_get_settings( $settings_key );
 				}
@@ -261,11 +296,11 @@ class WP_ConvertKit {
 			$forms = get_option( 'convertkit_forms' );
 
 			if ( isset( $forms[ $form_id ]['uid'] ) ) {
-				// new form
+				// New form.
 				$tag  = '<script async data-uid="' . $forms[ $form_id ]['uid'] . '" src="' . $forms[ $form_id ]['embed_js'] . '"></script>';
 				$form = $tag;
 			} else {
-				// old form
+				// Old form.
 				$url = add_query_arg(
 					array(
 						'api_key' => self::_get_settings( 'api_key' ),
@@ -293,28 +328,34 @@ class WP_ConvertKit {
 			$landing_page_id = self::_get_meta( $queried_object->ID, 'landing_page' );
 
 			if ( '0' === $landing_page_id || empty( $landing_page_id ) ) {
-				// Set to None
+				// Set to None.
 				return;
 			}
 
-			if ( strstr( $landing_page_id, 'http') ) {
-				// Old landing page
+			if ( strstr( $landing_page_id, 'http' ) ) {
+
+				// Old landing page.
 				$landing_page = self::$api->get_resource( $landing_page_id );
+
 				if ( ! empty( $landing_page ) ) {
 					$script       = WP_ConvertKit::get_ck_script();
-					$script       .= "</head>";
+					$script      .= '</head>';
 					$landing_page = str_replace( '</head>', $script, $landing_page );
+
 					echo $landing_page; // WPCS: XSS ok.
 					exit;
 				}
 			} else {
-				// New landing page
+
+				// New landing page.
 				$landing_pages = get_option( 'convertkit_landing_pages' );
-				$landing_page = self::$api->get_resource( $landing_pages[$landing_page_id]['embed_url'] );
+				$landing_page  = self::$api->get_resource( $landing_pages[ $landing_page_id ]['embed_url'] );
+
 				if ( ! empty( $landing_page ) ) {
 					$script       = WP_ConvertKit::get_ck_script( true );
-					$script       .= "</head>";
+					$script      .= '</head>';
 					$landing_page = str_replace( '</head>', $script, $landing_page );
+
 					echo $landing_page; // WPCS: XSS ok.
 					exit;
 				}
@@ -329,18 +370,20 @@ class WP_ConvertKit {
 	 * javascript if we want subscribers tagged correctly.
 	 *
 	 * @since 1.5.2
-	 * @param bool $include_jquery
+	 * @param bool $include_jquery Whether to explicitly load jQuery.
 	 * @return string
 	 */
-	public static function get_ck_script( $include_jquery = false) {
+	public static function get_ck_script( $include_jquery = false ) {
 		$script = '';
+
 		if ( $include_jquery ) {
-			$scripts = new WP_Scripts();
-			$script .= "<script type='text/javascript' src='" . trailingslashit( $scripts->base_url ) . "wp-includes/js/jquery/jquery.js?ver=1.4.0'></script>";
+			wp_enqueue_script( 'jquery' );
 		}
+
 		$script .= "<script type='text/javascript' src='" . CONVERTKIT_PLUGIN_URL . "resources/frontend/jquery.cookie.min.js?ver=1.4.0'></script>";
 		$script .= "<script type='text/javascript' src='" . CONVERTKIT_PLUGIN_URL . 'resources/frontend/wp-convertkit.js?ver=' . CONVERTKIT_PLUGIN_VERSION . "'></script>";
 		$script .= "<script type='text/javascript'>/* <![CDATA[ */var ck_data = {\"ajaxurl\":\"" . admin_url( 'admin-ajax.php' ) . '"};/* ]]> */</script>';
+
 		return $script;
 	}
 
@@ -349,11 +392,12 @@ class WP_ConvertKit {
 	 */
 	public static function enqueue_scripts() {
 
-		// Only check for tags if we're on a singular post; otherwise, no tags
+		// Only check for tags if we're on a singular post; otherwise, no tags.
 		$has_tag = is_singular() ? self::post_has_tag( get_post() ) : false;
 
-		// Only load scripts if no scripts setting is not checked
+		// Only load scripts if no scripts setting is not checked.
 		$no_scripts = self::_get_settings( 'no_scripts' );
+
 		if ( ! $no_scripts ) {
 			wp_register_script(
 				'jquery-cookie',
@@ -373,7 +417,7 @@ class WP_ConvertKit {
 				'convertkit-js',
 				'ck_data',
 				array(
-					'ajaxurl' => admin_url( 'admin-ajax.php' ),
+					'ajaxurl'      => admin_url( 'admin-ajax.php' ),
 					'post_has_tag' => $has_tag,
 				)
 			);
@@ -393,21 +437,21 @@ class WP_ConvertKit {
 	 * Shortcode callback
 	 *
 	 * @param array $attributes Shortcode attributes.
-	 * @param null $content
+	 * @param null  $content The shortcode content.
 	 * @return string
 	 */
 	public static function shortcode( $attributes, $content = null ) {
 
 		if ( isset( $attributes['id'] ) ) {
 			$form_id = $attributes['id'];
-			$forms = get_option( 'convertkit_forms' );
+			$forms   = get_option( 'convertkit_forms' );
 
 			if ( isset( $forms[ $form_id ]['uid'] ) ) {
-				// new form
+				// New form.
 				$form_markup = '<script async data-uid="' . $forms[ $form_id ]['uid'] . '" src="' . $forms[ $form_id ]['embed_js'] . '"></script>';
 				return apply_filters( 'wp_convertkit_get_form_embed', $form_markup, $attributes );
 			} else {
-				// old form
+				// Old form.
 				$url = add_query_arg(
 					array(
 						'api_key' => self::_get_settings( 'api_key' ),
@@ -418,10 +462,10 @@ class WP_ConvertKit {
 			}
 		} elseif ( isset( $attributes['form'] ) ) {
 			$form_id = $attributes['form'];
-			$forms = get_option( 'convertkit_forms' );
+			$forms   = ( 'convertkit_forms' );
 
 			if ( isset( $forms[ $form_id ]['uid'] ) ) {
-				// new form
+				// New form.
 				$form_markup = '<script async data-uid="' . $forms[ $form_id ]['uid'] . '" src="' . $forms[ $form_id ]['embed_js'] . '"></script>';
 				return apply_filters( 'wp_convertkit_get_form_embed', $form_markup, $attributes );
 			} else {
@@ -435,7 +479,7 @@ class WP_ConvertKit {
 			}
 		} else {
 			$form_id = self::_get_settings( 'default_form' );
-			$url = add_query_arg(
+			$url     = add_query_arg(
 				array(
 					'api_key' => self::_get_settings( 'api_key' ),
 					'v'       => self::$forms_version,
@@ -454,16 +498,16 @@ class WP_ConvertKit {
 	}
 
 	/**
-	 * Retrieve meta
+	 * Retrieve meta.
 	 *
 	 * @return array|null
 	 */
 	private static function _get_meta_defaults() {
 		if ( is_null( self::$meta_defaults ) ) {
 			self::$meta_defaults = array(
-				'form' => '-1',
+				'form'         => '-1',
 				'landing_page' => '',
-				'tag' => '',
+				'tag'          => '',
 			);
 		}
 
@@ -471,9 +515,9 @@ class WP_ConvertKit {
 	}
 
 	/**
-	 * Get selected post meta
+	 * Get selected post meta.
 	 *
-	 * @param int $post_id Post ID.
+	 * @param int  $post_id Post ID.
 	 * @param null $meta_key Key string to get.
 	 *
 	 * @return array|bool
@@ -481,13 +525,14 @@ class WP_ConvertKit {
 	private static function _get_meta( $post_id, $meta_key = null ) {
 		$post_id = empty( $post_id ) ? get_the_ID() : $post_id;
 
-		$meta = get_post_meta( $post_id, self::POST_META_KEY, true );
+		$meta          = get_post_meta( $post_id, self::POST_META_KEY, true );
 		$meta_defaults = self::_get_meta_defaults();
 
 		if ( empty( $meta ) ) {
 			$meta = $meta_defaults;
 
 			$old_value = intval( get_post_meta( $post_id, '_convertkit_convertkit_form', true ) );
+
 			if ( 0 !== $old_value ) {
 				$meta['form'] = $old_value;
 			}
@@ -499,19 +544,20 @@ class WP_ConvertKit {
 	}
 
 	/**
-	 * Get plugin settings
+	 * Get plugin settings.
 	 *
-	 * @param null $settings_key
+	 * @param null $settings_key Specific settings instance key.
+	 *
 	 * @return mixed|null
 	 */
 	public static function _get_settings( $settings_key = null ) {
 		$settings = get_option( self::SETTINGS_NAME, self::$settings_defaults );
 
-		return is_null( $settings_key ) ? $settings : ( isset( $settings[ $settings_key ] ) ? $settings[ $settings_key ] : null);
+		return is_null( $settings_key ) ? $settings : ( isset( $settings[ $settings_key ] ) ? $settings[ $settings_key ] : null );
 	}
 
 	/**
-	 * Get instance of ConvertKitAPI
+	 * Get instance of ConvertKitAPI.
 	 */
 	private static function _api_connect() {
 		$api_key    = self::_get_settings( 'api_key' );
@@ -549,6 +595,8 @@ class WP_ConvertKit {
 	}
 
 	/**
+	 * Get forms version.
+	 *
 	 * @return string
 	 */
 	public static function get_forms_version() {
@@ -564,7 +612,7 @@ class WP_ConvertKit {
 	private static function _get_settings_page_link( $query_args = array() ) {
 		$query_args = array(
 			'page' => self::SETTINGS_PAGE_SLUG,
-			) + $query_args;
+		) + $query_args;
 
 		return add_query_arg( $query_args, admin_url( 'options-general.php' ) );
 	}
@@ -573,7 +621,7 @@ class WP_ConvertKit {
 	 * Get default form for the post's categories.
 	 * If there are multiple set the last one found will be returned.
 	 *
-	 * @param int $id
+	 * @param int $id WordPress post ID.
 	 * @return int $form_id
 	 */
 	private static function get_category_form( $id ) {
@@ -599,15 +647,16 @@ class WP_ConvertKit {
 	static function log( $message ) {
 
 		if ( 'on' === self::_get_settings( 'debug' ) ) {
-			$dir = CONVERTKIT_PLUGIN_PATH;
+			$dir    = CONVERTKIT_PLUGIN_PATH;
 			$handle = fopen( trailingslashit( $dir ) . 'log.txt', 'a' );
+
 			if ( $handle ) {
 				$time = date_i18n( 'm-d-Y @ H:i:s -' );
+
 				fwrite( $handle, $time . ' ' . $message . "\n" );
 				fclose( $handle );
 			}
 		}
-
 	}
 
 	/**
@@ -615,7 +664,7 @@ class WP_ConvertKit {
 	 */
 	public static function upgrade() {
 
-		$current_version = get_option( 'convertkit_version' );
+		$current_version               = get_option( 'convertkit_version' );
 		$convertkit_user_history_table = get_option( 'convertkit_user_history_table' );
 
 		if ( ! $current_version ) {
@@ -629,8 +678,8 @@ class WP_ConvertKit {
 				if ( ! $posts ) {
 
 					$args = array(
-						'post_type'      => array( 'post', 'page' ),
-						'fields'         => 'ids',
+						'post_type' => array( 'post', 'page' ),
+						'fields'    => 'ids',
 					);
 
 					$result = new WP_Query( $args );
@@ -676,27 +725,30 @@ class WP_ConvertKit {
 			} else {
 				update_option( 'convertkit_version', CONVERTKIT_PLUGIN_VERSION );
 			} // End if().
-		} elseif ( version_compare( $current_version, '1.5.0', '<' )  || ! $convertkit_user_history_table ) {
+		} elseif ( version_compare( $current_version, '1.5.0', '<' ) || ! $convertkit_user_history_table ) {
 
-			// Create User History table
+			// Create User History table.
 			ConvertKit_Custom_Content::create_table();
 			update_option( 'convertkit_version', CONVERTKIT_PLUGIN_VERSION );
 
 		} elseif ( version_compare( $current_version, '1.6.1', '<' ) ) {
-			// Refresh the forms meta to get new forms builder settings
-			$api_key = self::_get_settings( 'api_key' );
+			// Refresh the forms meta to get new forms builder settings.
+			$api_key    = self::_get_settings( 'api_key' );
 			$api_secret = self::_get_settings( 'api_secret' );
 
 			if ( ! empty( $api_key ) && ! empty( $api_secret ) ) {
 				self::$api->update_resources( $api_key, $api_secret );
 			}
+
 			update_option( 'convertkit_version', CONVERTKIT_PLUGIN_VERSION );
 		}// End if().
 	}
 
 
 	/**
-	 * @param $post WP_Post
+	 * If post has a tag assigned to it.
+	 *
+	 * @param WP_Post $post The post's WP_Post object.
 	 *
 	 * @return boolean
 	 */
@@ -704,7 +756,7 @@ class WP_ConvertKit {
 		$meta = get_post_meta( $post->ID, '_wp_convertkit_post_meta', true );
 
 		if ( isset( $meta['tag'] ) ) {
-			return ( $meta['tag'] == 0 ) ? false : true;
+			return ( 0 === $meta['tag'] ) ? false : true;
 		}
 		return false;
 	}

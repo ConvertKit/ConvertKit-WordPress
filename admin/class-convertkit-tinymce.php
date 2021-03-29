@@ -37,12 +37,14 @@ class ConvertKit_TinyMCE {
 	 * Register the external plugin
 	 *
 	 * @since 1.5.0
-	 * @param $plugins
+	 *
+	 * @param array $plugins TinyMCE plugins.
+	 *
 	 * @return mixed
 	 */
 	public function add_tinymce_plugin( $plugins ) {
-
 		$plugins['convertkit_button'] = CONVERTKIT_PLUGIN_URL . 'resources/backend/tinymce-buttons.js?' . time();
+
 		return $plugins;
 	}
 
@@ -50,7 +52,9 @@ class ConvertKit_TinyMCE {
 	 * Register the external plugin.
 	 *
 	 * @since 1.5.0
-	 * @param $buttons
+	 *
+	 * @param array $buttons TinyMCE buttons.
+	 *
 	 * @return array
 	 */
 	public function register_mce_button( $buttons ) {
@@ -58,7 +62,6 @@ class ConvertKit_TinyMCE {
 
 		return $buttons;
 	}
-
 
 }
 

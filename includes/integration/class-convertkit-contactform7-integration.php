@@ -14,11 +14,15 @@ require_once CONVERTKIT_PLUGIN_PATH . '/includes/class-convertkit-api.php';
 class ConvertKit_ContactForm7_Integration {
 
 	/**
+	 * ConvertKit API instance.
+	 *
 	 * @var ConvertKit_API
 	 */
 	protected $api;
 
 	/**
+	 * CF7 settings from ConvertKit options.
+	 *
 	 * @var mixed|void
 	 */
 	protected $options;
@@ -42,8 +46,10 @@ class ConvertKit_ContactForm7_Integration {
 	 *
 	 * If a mapping is found and options exist then the form submitter is subscribed.
 	 *
-	 * @param WPCF7_ContactForm $contact_form
-	 * @param $result
+	 * @param WPCF7_ContactForm $contact_form The contact form object.
+	 * @param array             $result Resulting form submission to check.
+	 *
+	 * @return void
 	 */
 	public function handle_wpcf7_submit( $contact_form, $result ) {
 
@@ -66,10 +72,11 @@ class ConvertKit_ContactForm7_Integration {
 						$email = $posted_data['your-email'];
 
 						if ( ! empty( $email ) ) {
-							$this->api->form_subscribe( $mapping[ $contact_form->id() ],
+							$this->api->form_subscribe(
+								$mapping[ $contact_form->id() ],
 								array(
 									'email' => $email,
-									'name' => $name,
+									'name'  => $name,
 								)
 							);
 						}

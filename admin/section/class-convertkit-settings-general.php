@@ -54,17 +54,21 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 		$update_resources = $this->api->update_resources( $api_key, $api_secret );
 
 		$forms = get_option( 'convertkit_forms', array() );
+
 		/**
 		 * Alphabetize
 		 */
-		usort( $forms, function( $a, $b ) {
-			return strcmp( $a['name'], $b['name'] );
-		});
+		usort(
+			$forms,
+			function( $a, $b ) {
+				return strcmp( $a['name'], $b['name'] );
+			}
+		);
 
 		if ( $update_resources && isset( $forms[0] ) && isset( $forms[0]['id'] ) && '-2' === $forms[0]['id'] ) {
-			wp_send_json_error( __( 'Error connecting to API. Please verify your site can connect to https://api.convertkit.com','convertkit' ) );
+			wp_send_json_error( __( 'Error connecting to API. Please verify your site can connect to https://api.convertkit.com', 'convertkit' ) );
 			wp_die();
-		} else if ( ! $update_resources ) {
+		} elseif ( ! $update_resources ) {
 			/**
 			 * There are two reasons $update_resources could be false:
 			 * 1) Saving failed because the wp_options table does not use the utf8mb4 character set
@@ -75,29 +79,34 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 			global $wpdb;
 
 			if ( $wpdb->get_col_charset( 'wp_options', 'option_value' ) !== 'utf8mb4' ) {
-				wp_send_json_error( __( 'Updating forms from ConvertKit may have failed. If so, this may be because your database uses the out of date utf8 character set, instead of the newer utf8mb4 character set. Please contact your host to upgrade your database.','convertkit' ) );
+				wp_send_json_error( __( 'Updating forms from ConvertKit may have failed. If so, this may be because your database uses the out of date utf8 character set, instead of the newer utf8mb4 character set. Please contact your host to upgrade your database.', 'convertkit' ) );
 				wp_die();
-            }
+			}
 		}
 
 		ob_start();
+
 		$this->default_form_callback( $forms );
 		$html = ob_get_clean();
 
 		$woocommerce = false;
+
 		if ( post_type_exists( 'product' ) ) {
+
 			$args = array(
 				$forms,
-				get_post_type_object( 'product' )
+				get_post_type_object( 'product' ),
 			);
+
 			ob_start();
+
 			$this->custom_post_types_callback( $args );
 			$woocommerce = ob_get_clean();
 		}
 
 		$data = array(
 			'default'     => $html,
-			'woocommerce' => $woocommerce
+			'woocommerce' => $woocommerce,
 		);
 
 		wp_send_json_success( $data );
@@ -108,16 +117,17 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 	 * Register and add settings
 	 */
 	public function register_fields() {
-		$forms = $this->get_forms();
+		$forms        = $this->get_forms();
 		$account_name = get_option( 'convertkit_account_name' );
-        add_settings_field(
-            'account_name',
-            'Account Name',
-            array( $this, 'account_name_callback' ),
-            $this->settings_key,
-            $this->name,
-            $account_name
-        );
+
+		add_settings_field(
+			'account_name',
+			'Account Name',
+			array( $this, 'account_name_callback' ),
+			$this->settings_key,
+			$this->name,
+			$account_name
+		);
 
 		add_settings_field(
 			'api_key',
@@ -177,18 +187,22 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 	/**
 	 * Register fields for supported custom post types
 	 *
-	 * @param  array  $forms  Form listing.
+	 * @param array $forms Form listing.
 	 */
 	private function register_custom_post_type_fields( $forms ) {
 
-		// Gets all publicly visible custom post types
-		$post_types = get_post_types( array(
-			'public'   => true,
-			'_builtin' => false
-		), 'objects', 'and' );
+		// Gets all publicly visible custom post types.
+		$post_types = get_post_types(
+			array(
+				'public'   => true,
+				'_builtin' => false,
+			),
+			'objects',
+			'and'
+		);
 
 		$supported_post_types = array(
-			'product'
+			'product',
 		);
 
 		/**
@@ -197,9 +211,12 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 		 * don't reliably use the_content that we can filter, so we may need custom code to handle
 		 * each post type when we want to add a form to it.
 		 */
-		$post_types = array_filter( $post_types, function ( $post_type ) use ( $supported_post_types ) {
-			return in_array( $post_type->name, $supported_post_types );
-		} );
+		$post_types = array_filter(
+			$post_types,
+			function ( $post_type ) use ( $supported_post_types ) {
+				return in_array( $post_type->name, $supported_post_types, true );
+			}
+		);
 
 		foreach ( $post_types as $post_type ) {
 			add_settings_field(
@@ -210,7 +227,7 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 				$this->name,
 				array(
 					$forms,
-					$post_type
+					$post_type,
 				)
 			);
 		}
@@ -221,31 +238,35 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 	 */
 	public function print_section_info() {
 		?>
-        <p><?php esc_html_e( 'Choosing a default form will embed it at the bottom of every post or page (in single view only) across your site.', 'convertkit' ); ?></p>
-        <p><?php esc_html_e( 'If you wish to turn off form embedding or select a different form for an individual post or page, you can do so using the ConvertKit meta box on the edit page.', 'convertkit' ); ?></p><?php
-		/* translators: 1: shortcode */ ?>
-        <p><?php printf( esc_html__( 'The default form can be inserted into the middle of post or page content by using the %s shortcode.', 'convertkit' ), '<code>[convertkit]</code>' ); ?></p>
+		<p><?php esc_html_e( 'Choosing a default form will embed it at the bottom of every post or page (in single view only) across your site.', 'convertkit' ); ?></p>
+		<p><?php esc_html_e( 'If you wish to turn off form embedding or select a different form for an individual post or page, you can do so using the ConvertKit meta box on the edit page.', 'convertkit' ); ?></p>
+
+		<?php /* Translators: 1: shortcode */ ?>
+		<p><?php printf( esc_html__( 'The default form can be inserted into the middle of post or page content by using the %s shortcode.', 'convertkit' ), '<code>[convertkit]</code>' ); ?></p>
 		<?php
 	}
 
-    /**
-     * Renders the input for api key entry
-     */
-    public function account_name_callback( $account_name ) {
-	    $has_api = isset( $this->options['api_key'] ) ? esc_attr( $this->options['api_key'] ) : false;
+	/**
+	 * Renders the input for API key entry.
+	 *
+	 * @param string $account_name Account name.
+	 */
+	public function account_name_callback( $account_name ) {
+		$has_api = isset( $this->options['api_key'] ) ? esc_attr( $this->options['api_key'] ) : false;
 
-	    if ( ! $has_api ) {
-		    $html = '<p class="description">' . __( 'Add your API Key and Secret to get started', 'convertkit' ) . '</p>';
-	    } else {
-		    $html = sprintf(
-			    '<span>%s</span>',
-			    isset( $account_name ) ? esc_attr( $account_name ) : ''
-		    );
-		    $html .= '<p class="description">' . __( 'The name of your connected ConvertKit account', 'convertkit' ) . '</p>';
-	    }
+		if ( ! $has_api ) {
+			$html = '<p class="description">' . __( 'Add your API Key and Secret to get started', 'convertkit' ) . '</p>';
+		} else {
+			$html = sprintf(
+				'<span>%s</span>',
+				isset( $account_name ) ? esc_attr( $account_name ) : ''
+			);
 
-	    echo $html; // WPCS: XSS ok.
-    }
+			$html .= '<p class="description">' . __( 'The name of your connected ConvertKit account', 'convertkit' ) . '</p>';
+		}
+
+		echo $html; // WPCS: XSS ok.
+	}
 
 	/**
 	 * Renders the input for api key entry
@@ -294,7 +315,7 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 		$html = '<div id="default_form_container">';
 		// Check for error in response.
 		if ( isset( $forms[0]['id'] ) && '-2' === $forms[0]['id'] ) {
-			$html .= '<p id="default_form_error" class="error">' . __( 'Error connecting to API. Please verify your site can connect to <code>https://api.convertkit.com</code>','convertkit' ) . '</p>';
+			$html .= '<p id="default_form_error" class="error">' . __( 'Error connecting to API. Please verify your site can connect to <code>https://api.convertkit.com</code>', 'convertkit' ) . '</p>';
 			$html .= sprintf( '<input hidden id="default_form" name="%s[default_form]" value="">', $this->settings_key );
 		} else {
 			$html .= sprintf( '<select id="default_form" name="%s[default_form]">', $this->settings_key );
@@ -303,13 +324,11 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 		}
 
 		if ( empty( $this->options['api_key'] ) ) {
-			$html .= '<p class="description">' . __( 'Enter your API Key above to get your available forms.',
-					'convertkit' ) . '</p>';
+			$html .= '<p class="description">' . __( 'Enter your API Key above to get your available forms.', 'convertkit' ) . '</p>';
 		}
 
 		if ( empty( $forms ) ) {
-			$html .= '<p class="description">' . __( 'There are no forms setup in your account. You can go <a href="https://app.convertkit.com/landing_pages/new" target="_blank">here</a> to create one.',
-					'convertkit' ) . '</p>';
+			$html .= '<p class="description">' . __( 'There are no forms setup in your account. You can go <a href="https://app.convertkit.com/landing_pages/new" target="_blank">here</a> to create one.', 'convertkit' ) . '</p>';
 		}
 
 		$html .= '</div>';
@@ -318,21 +337,21 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 	}
 
 	/**
-	 * Callback used to generate settings for custom post types
+	 * Callback used to generate settings for custom post types.
 	 *
-	 * @param  array  $args
+	 * @param array $args Form and post types args.
 	 */
 	public function custom_post_types_callback( $args ) {
 
 		list( $forms, $post_type ) = $args;
+
 		$html = '<div id="' . $post_type->name . '_form_container">';
 
 		$options_key = $post_type->name . '_form';
 
 		$selected = array_key_exists( $options_key, $this->options ) ? $this->options[ $options_key ] : false;
 
-		$html .= sprintf( '<select id="%s_form" name="%s[%s_form]" class=%s">', $post_type->name, $this->settings_key,
-			$post_type->name, 'form-select-list' );
+		$html .= sprintf( '<select id="%s_form" name="%s[%s_form]" class=%s">', $post_type->name, $this->settings_key, $post_type->name, 'form-select-list' );
 		$html .= $this->forms_options_list( $forms, $selected );
 		$html .= '</select>';
 
@@ -342,10 +361,10 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 	}
 
 	/**
-	 * Generates string of <option> elements to fill <select> element with list of forms
+	 * Generates string of <option> elements to fill <select> element with list of forms.
 	 *
-	 * @param  array  $forms
-	 * @param $selected
+	 * @param array  $forms Forms to list.
+	 * @param string $selected The already-selected form.
 	 *
 	 * @return string
 	 */
@@ -353,7 +372,7 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 		$html = '<option value="default">' . __( 'None', 'convertkit' ) . '</option>';
 		if ( $forms ) {
 			foreach ( $forms as $form ) {
-				$form = (array) $form;
+				$form  = (array) $form;
 				$html .= sprintf(
 					'<option value="%s" %s>%s</option>',
 					esc_attr( $form['id'] ),
@@ -378,20 +397,20 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 	}
 
 	/**
-	 * Renders the input for debug setting
+	 * Renders the input for debug setting.
 	 */
 	public function debug_callback() {
-
 		$debug = '';
+
 		if ( isset( $this->options['debug'] ) && 'on' === $this->options['debug'] ) {
 			$debug = 'checked';
 		}
 
-		$html = sprintf( // WPCS: XSS OK
+		$html = sprintf( // WPCS: XSS okay.
 			'<label><input type="checkbox" class="" id="debug" name="%s[debug]"  %s />%s</label>',
 			$this->settings_key,
 			$debug,
-			__( 'Save connection data to a log file.','convertkit' )
+			__( 'Save connection data to a log file.', 'convertkit' )
 		);
 
 		$html .= '<p class="description">' . __( 'You can ignore this unless you\'re working with our support team to resolve an issue.', 'convertkit' ) . '</p>';
@@ -409,11 +428,11 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 			$no_scripts = 'checked';
 		}
 
-		echo sprintf( // WPCS: XSS OK
+		echo sprintf( // WPCS: XSS okay.
 			'<label><input type="checkbox" class="" id="no_scripts" name="%s[no_scripts]"  %s />%s</label>',
 			$this->settings_key,
 			$no_scripts,
-			__( 'Prevent plugin from loading javascript files. This will disable the custom content and tagging features of the plugin. Does not apply to landing pages. Use with caution!','convertkit' )
+			__( 'Prevent plugin from loading javascript files. This will disable the custom content and tagging features of the plugin. Does not apply to landing pages. Use with caution!', 'convertkit' )
 		);
 
 	}
@@ -425,13 +444,13 @@ class ConvertKit_Settings_General extends ConvertKit_Settings_Base {
 	 * @return array Sanitized settings.
 	 */
 	public function sanitize_settings( $settings ) {
-        $defaults = array(
-            'api_key'      => '',
-            'api_secret'   => '',
-            'default_form' => 0,
-            'debug'        => '',
-            'no_scripts'   => '',
-        );
+		$defaults = array(
+			'api_key'      => '',
+			'api_secret'   => '',
+			'default_form' => 0,
+			'debug'        => '',
+			'no_scripts'   => '',
+		);
 
 		if ( isset( $settings['api_key'] ) && isset( $settings['api_secret'] ) ) {
 			$this->api->update_resources( $settings['api_key'], $settings['api_secret'] );

@@ -30,10 +30,10 @@ class ConvertKit_Settings_ContactForm7 extends ConvertKit_Settings_Base {
 			return;
 		}
 
-		$this->settings_key  = '_wp_convertkit_integration_contactform7_settings';
-		$this->name          = 'contactform7';
-		$this->title         = 'Contact Form 7 Integration Settings';
-		$this->tab_text      = 'Contact Form 7';
+		$this->settings_key = '_wp_convertkit_integration_contactform7_settings';
+		$this->name         = 'contactform7';
+		$this->title        = 'Contact Form 7 Integration Settings';
+		$this->tab_text     = 'Contact Form 7';
 
 		$this->get_cf7_forms();
 
@@ -48,17 +48,17 @@ class ConvertKit_Settings_ContactForm7 extends ConvertKit_Settings_Base {
 		$forms = array();
 
 		$args = array(
-			'orderby' => 'ID',
+			'orderby'        => 'ID',
 			'posts_per_page' => '100',
-			'order' => 'ASC',
-			'post_type' => 'wpcf7_contact_form',
+			'order'          => 'ASC',
+			'post_type'      => 'wpcf7_contact_form',
 		);
 
 		$result = new WP_Query( $args );
 
 		foreach ( $result->posts as $post ) {
 			$forms[] = array(
-				'id' => $post->ID,
+				'id'   => $post->ID,
 				'name' => $post->post_title,
 			);
 		}
@@ -126,23 +126,28 @@ class ConvertKit_Settings_ContactForm7 extends ConvertKit_Settings_Base {
 				)
 			);
 
-		} // End foreach().
+		}
 	}
 
 	/**
-	 * Prints help info for this section
+	 * Prints help info for this section.
 	 */
 	public function print_section_info() {
-		?><p><?php
-		esc_html_e( 'ConvertKit seamlessly integrates with Contact Form 7 to let you add subscribers using Contact Form 7 forms.', 'convertkit' );
-		?></p><p><?php
-		printf( 'The Contact Form 7 form must have <code>text*</code> fields named <code>your-name</code> and <code>your-email</code>. ' );
-		esc_html_e( 'These fields will be sent to ConvertKit for the subscription.', 'convertkit' );
-		?></p><?php
+		?>
+		<p><?php esc_html_e( 'ConvertKit seamlessly integrates with Contact Form 7 to let you add subscribers using Contact Form 7 forms.', 'convertkit' ); ?></p>
+
+		<p>
+		<?php
+			printf( 'The Contact Form 7 form must have <code>text*</code> fields named <code>your-name</code> and <code>your-email</code>. ' );
+			esc_html_e( 'These fields will be sent to ConvertKit for the subscription.', 'convertkit' );
+		?>
+		</p>
+
+		<?php
 	}
 
 	/**
-	 * Render the settings table. Designed to mimic WP's do_settings_fields
+	 * Render the settings table. Designed to mimic WP's do_settings_fields.
 	 */
 	public function do_settings_table() {
 		global $wp_settings_fields;
@@ -191,7 +196,6 @@ class ConvertKit_Settings_ContactForm7 extends ConvertKit_Settings_Base {
 
 		foreach ( $wp_settings_sections[ $this->settings_key ] as $section ) {
 			if ( $section['title'] ) {
-				?><?php
 				echo '<h3>' . esc_html( $section['title'] ) . '</h3>';
 			}
 			if ( $section['callback'] ) {
@@ -222,10 +226,11 @@ class ConvertKit_Settings_ContactForm7 extends ConvertKit_Settings_Base {
 	 */
 	public function cf7_form_callback( $args ) {
 		$cf7_form_id = $args['cf7_form_id'];
-		$forms  = $args['forms'];
+		$forms       = $args['forms'];
 
-		$html = sprintf( '<select id="%1$s_%2$s" class="widefat" name="%1$s[%2$s]">', $this->settings_key, $cf7_form_id );
+		$html  = sprintf( '<select id="%1$s_%2$s" class="widefat" name="%1$s[%2$s]">', $this->settings_key, $cf7_form_id );
 		$html .= '<option value="default">' . esc_html__( 'None', 'convertkit' ) . '</option>';
+
 		foreach ( $forms as $form ) {
 			$selected = '';
 			if ( isset( $this->options[ $cf7_form_id ] ) ) {
@@ -237,6 +242,7 @@ class ConvertKit_Settings_ContactForm7 extends ConvertKit_Settings_Base {
 				$selected . '>' .
 				esc_html( $form['name'] ) . '</option>';
 		}
+
 		$html .= '</select>';
 
 		return $html;
@@ -271,7 +277,7 @@ class ConvertKit_Settings_ContactForm7 extends ConvertKit_Settings_Base {
 	 */
 	public function sanitize_settings( $input ) {
 		// Settings page can be paginated; combine input with existing options.
-		// If saved options are not an array, start fresh. Fixes rogue saved options
+		// If saved options are not an array, start fresh. Fixes rogue saved options.
 		$output = is_array( $this->options ) ? $this->options : array();
 
 		foreach ( $input as $key => $value ) {

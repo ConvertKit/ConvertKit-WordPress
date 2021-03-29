@@ -11,77 +11,77 @@ use KubAT\PhpSimple\HtmlDomParser;
 
 /**
  * ConvertKit_API Class
- * Establishes API connection to ConvertKit App
+ * Establishes API connection to ConvertKit App.
  */
 class ConvertKit_API {
 
 	/**
-	 * ConvertKit API Key
+	 * ConvertKit API Key.
 	 *
 	 * @var string
 	 */
 	protected $api_key;
 
 	/**
-	 * ConvertKit API Secret
+	 * ConvertKit API Secret.
 	 *
 	 * @var string
 	 */
 	protected $api_secret;
 
 	/**
-	 * Save debug data to log
+	 * Save debug data to log.
 	 *
 	 * @var  string
 	 */
 	protected $debug;
 
 	/**
-	 * Version of ConvertKit API
+	 * Version of ConvertKit API.
 	 *
 	 * @var string
 	 */
 	protected $api_version = 'v3';
 
 	/**
-	 * ConvertKit API URL
+	 * ConvertKit API URL.
 	 *
 	 * @var string
 	 */
 	protected $api_url_base = 'https://api.convertkit.com/';
 
 	/**
-	 * API resources
+	 * API resources.
 	 *
 	 * @var array
 	 */
 	protected $resources = array();
 
 	/**
-	 * Additional markup
+	 * Additional markup.
 	 *
 	 * @var array
 	 */
 	protected $markup = array();
 
 	/**
-	 * Constructor for ConvertKitAPI instance
+	 * Constructor for ConvertKitAPI instance.
 	 *
 	 * @param string $api_key ConvertKit API Key.
 	 * @param string $api_secret ConvertKit API Secret.
 	 * @param string $debug Save data to log.
 	 */
 	public function __construct( $api_key, $api_secret, $debug ) {
-		$this->api_key = $api_key;
+		$this->api_key    = $api_key;
 		$this->api_secret = $api_secret;
-		$this->debug = $debug;
+		$this->debug      = $debug;
 	}
 
 	/**
-	 * Adds a tag to a subscriber
+	 * Adds a tag to a subscriber.
 	 *
-	 * @param int $tag Tag ID
-	 * @param array $options Array of user data
+	 * @param int   $tag Tag ID.
+	 * @param array $options Array of user data.
 	 * @return object
 	 */
 	public function add_tag( $tag, $options ) {
@@ -98,33 +98,36 @@ class ConvertKit_API {
 	/**
 	 * Update resources in local options table.
 	 *
-	 * @param string $api_key
-	 * @param string $api_secret
+	 * @param string $api_key API key.
+	 * @param string $api_secret API secret.
 	 * @return boolean
 	 */
 	public function update_resources( $api_key, $api_secret ) {
 
 		$this->api_key = $api_key;
 
-		$forms = array();
+		$forms         = array();
 		$landing_pages = array();
-		$tags = array();
+		$tags          = array();
 
 		WP_ConvertKit::log( 'Updating resource with API key: ' . $api_key );
-		// Forms and Landing Pages
+
+		// Forms and Landing Pages.
 		$api_response = $this->_get_api_response( 'forms' );
 		WP_ConvertKit::log( 'API Response: ' . print_r( $api_response, true ) );
 
 		if ( is_null( $api_response )
-			 || is_wp_error( $api_response )
-			 || isset( $api_response['error'] )
-			 || isset( $api_response['error_message'] ) ) {
-			$error_message = isset( $api_response['error'] ) ? $api_response['error'] : 'unknown error';
+			|| is_wp_error( $api_response )
+			|| isset( $api_response['error'] )
+			|| isset( $api_response['error_message'] )
+		) {
+			$error_message  = isset( $api_response['error'] ) ? $api_response['error'] : 'unknown error';
 			$error_message .= is_wp_error( $api_response ) ? $api_response->get_error_message() : '';
+
 			WP_ConvertKit::log( 'Error contacting API: ' . $error_message );
 
 			$forms[0] = array(
-				'id' => '-2',
+				'id'   => '-2',
 				'name' => 'Error contacting API',
 			);
 
@@ -149,21 +152,29 @@ class ConvertKit_API {
 			$update_forms         = $this->maybe_update_option( 'convertkit_forms', $forms );
 			$update_landing_pages = $this->maybe_update_option( 'convertkit_landing_pages', $landing_pages );
 
-			// Tags
+			// Tags.
 			$api_response = $this->_get_api_response( 'tags' );
 			$response     = isset( $api_response['tags'] ) ? $api_response['tags'] : array();
+
 			foreach ( $response as $tag ) {
 				$tags[] = $tag;
 			}
+
 			$update_tags = $this->maybe_update_option( 'convertkit_tags', $tags );
 
 			$this->update_account_name( $api_secret );
 		}
 
-
 		return $update_forms && $update_landing_pages && $update_tags;
 	}
 
+	/**
+	 * Update ConvertKit account name.
+	 *
+	 * @param string $api_secret API secret.
+	 *
+	 * @return bool
+	 */
 	public function update_account_name( $api_secret ) {
 		$response = $this->_get_api_response( 'account', $api_secret );
 
@@ -178,16 +189,16 @@ class ConvertKit_API {
 	 *
 	 * This way, we know if there was a failure or not.
 	 *
-	 * @param string $option_name
-	 * @param mixed $option_value
+	 * @param string $option_name Option name.
+	 * @param mixed  $option_value Option value to (maybe) set.
 	 *
 	 * @return bool true if option was updated or if no update was needed, false if failure
 	 */
 	public function maybe_update_option( $option_name, $option_value ) {
 		$result = update_option( $option_name, $option_value );
 
-		if ( !$result ) {
-			$old = get_option( $option_name, $option_value );
+		if ( ! $result ) {
+			$old    = get_option( $option_name, $option_value );
 			$result = $old === $option_value ? true : false;
 		}
 
@@ -195,12 +206,12 @@ class ConvertKit_API {
 	}
 
 	/**
-	 * Gets a resource index
+	 * Gets a resource index.
 	 *
 	 * GET /{$resource}/
 	 *
 	 * @param string $resource Resource type.
-	 * @return object API response
+	 * @return object API response.
 	 */
 	public function get_resources( $resource ) {
 
@@ -213,9 +224,10 @@ class ConvertKit_API {
 			}
 
 			if ( is_null( $api_response ) || is_wp_error( $api_response ) || isset( $api_response['error'] ) || isset( $api_response['error_message'] ) ) {
+
 				$this->resources[ $resource ] = array(
 					array(
-						'id' => '-2',
+						'id'   => '-2',
 						'name' => 'Error contacting API',
 					),
 				);
@@ -224,16 +236,20 @@ class ConvertKit_API {
 
 				if ( 'forms' === $resource ) {
 					$response = isset( $api_response['forms'] ) ? $api_response['forms'] : array();
-					$forms = array();
+					$forms    = array();
+
 					foreach ( $response as $form ) {
+
 						if ( isset( $form['archived'] ) && $form['archived'] ) {
 							continue;
 						}
-						$_resource[] = $form;
-						$forms[ $form['id'] ] = $form;
 
+						$_resource[]          = $form;
+						$forms[ $form['id'] ] = $form;
 					}
+
 					update_option( 'convertkit_forms', $forms );
+
 				} elseif ( 'landing_pages' === $resource ) {
 
 					$response = isset( $api_response['forms'] ) ? $api_response['forms'] : array();
@@ -288,7 +304,7 @@ class ConvertKit_API {
 	}
 
 	/**
-	 * Remove subscription from a form
+	 * Remove subscription from a form.
 	 *
 	 * @param array $options Array of user data.
 	 */
@@ -307,16 +323,17 @@ class ConvertKit_API {
 	 * Get the ConvertKit subscriber ID associated with email address if it exists.
 	 * Return 0 if subscriber not found.
 	 *
-	 * @param $email_address
+	 * @param string $email_address Subscriber email address.
+	 *
 	 * @return int $subscriber_id
 	 */
 	public function get_subscriber_id( $email_address ) {
 
 		$url = add_query_arg(
 			array(
-				'api_secret' => WP_ConvertKit::get_api_secret(),
+				'api_secret'    => WP_ConvertKit::get_api_secret(),
 				'email_address' => $email_address,
-				'status' => 'all',
+				'status'        => 'all',
 			),
 			'https://api.convertkit.com/v3/subscribers'
 		);
@@ -324,28 +341,34 @@ class ConvertKit_API {
 		WP_ConvertKit::log( 'get_subscriber_id for: ' . $email_address );
 
 		$result = $this->get_resource( $url );
+
 		if ( is_wp_error( $result ) ) {
 			WP_ConvertKit::log( 'Error getting resource for: ' . $url . '. Error: ' . $result->get_error_messages() );
 			return 0;
 		}
 
-		$subs = json_decode( $result );
-
+		$subs        = json_decode( $result );
 		$subscribers = is_array( $subs->subscribers ) ? $subs->subscribers : array();
+
 		if ( $subscribers ) {
 			$subscriber = array_pop( $subscribers );
+
 			WP_ConvertKit::log( 'Found ' . count( $subscribers ) . ' subscribers' );
 			WP_ConvertKit::log( 'ID (' . $subscriber->id . ') ' . $subscriber->email_address );
+
 			return $subscriber->id;
 		}
-		WP_ConvertKit::log( 'Subscriber not found with email ' . $email_address );
-		// subscriber not found
-		return 0;
 
+		WP_ConvertKit::log( 'Subscriber not found with email ' . $email_address );
+
+		// Subscriber not found.
+		return 0;
 	}
 
 	/**
-	 * @param $subscriber_id
+	 * Get subscriber by ID.
+	 *
+	 * @param int $subscriber_id Subscriber ID.
 	 *
 	 * @return int
 	 */
@@ -360,6 +383,7 @@ class ConvertKit_API {
 		WP_ConvertKit::log( 'get_subscriber info for id: ' . $subscriber_id );
 
 		$result = $this->get_resource( $url );
+
 		if ( is_wp_error( $result ) ) {
 			WP_ConvertKit::log( 'Error getting resource for: ' . $url . '. Error: ' . $result->get_error_messages() );
 			return 0;
@@ -369,18 +393,21 @@ class ConvertKit_API {
 
 		if ( isset( $result->subscriber ) ) {
 			$subscriber = $result->subscriber;
+
 			WP_ConvertKit::log( 'Found: (' . $subscriber->id . ') ' . $subscriber->email_address );
+
 			return $subscriber;
 		}
 
-		// subscriber not found
+		// Subscriber not found.
 		return 0;
 	}
 
 	/**
 	 * Get a list of the tags for a subscriber.
 	 *
-	 * @param $subscriber_id
+	 * @param int $subscriber_id Subscriber ID.
+	 *
 	 * @return array $subscriber_tags Array of tags for customer with key of tag_id
 	 */
 	public function get_subscriber_tags( $subscriber_id ) {
@@ -395,12 +422,14 @@ class ConvertKit_API {
 		WP_ConvertKit::log( 'get_subscriber_tags for: ' . $subscriber_id );
 
 		$result = $this->get_resource( $url );
+
 		if ( is_wp_error( $result ) ) {
 			WP_ConvertKit::log( 'Error getting resource for: ' . $url . '. Error: ' . $result->get_error_messages() );
 			return array();
 		}
+
 		$result = json_decode( $result );
-		$tags = isset( $result->tags ) ? $result->tags : array();
+		$tags   = isset( $result->tags ) ? $result->tags : array();
 
 		if ( empty( $tags ) ) {
 			WP_ConvertKit::log( 'No tags found for customer.' );
@@ -430,25 +459,34 @@ class ConvertKit_API {
 			$response = wp_remote_get(
 				$url,
 				array(
-					'timeout' => 10,
+					'timeout'         => 10,
 					'Accept-Encoding' => 'gzip',
-					'user-agent' => convertkit_wp_get_user_agent(),
+					'user-agent'      => convertkit_wp_get_user_agent(),
 				)
 			);
 
 			if ( ! is_wp_error( $response ) ) {
 
-				// Maybe inflate response body.
-				// @see https://wordpress.stackexchange.com/questions/10088/how-do-i-troubleshoot-responses-with-wp-http-api
-				$inflate = @gzinflate( $response['body'] );
+				/**
+				 * Maybe inflate response body.
+				 *
+				 * @see https://wordpress.stackexchange.com/questions/10088/how-do-i-troubleshoot-responses-with-wp-http-api
+				 */
+				$inflate = @gzinflate( $response['body'] ); // phpcs:ignore -- @todo Determine better way to do this without suppressing errors and notices.
+
 				if ( $inflate ) {
 					$response['body'] = $inflate;
 				}
 
 				$body = wp_remote_retrieve_body( $response );
 
-				/** @var \simple_html_dom\simple_html_dom $html */
+				/**
+				 * Parse HTML.
+				 *
+				 * @var \simple_html_dom\simple_html_dom $html
+				 */
 				$html = HtmlDomParser::str_get_html( $body );
+
 				foreach ( $html->find( 'a, link' ) as $element ) {
 					if ( isset( $element->href ) && strpos( $element->href, 'fonts.googleapis.com' ) === false ) {
 						$element->href = RelativeToAbsoluteUrl::urlToAbsolute( $url, $element->href );
@@ -471,18 +509,15 @@ class ConvertKit_API {
 
 				// Check `status_code` for 200, otherwise log error.
 				if ( 200 === $response['response']['code'] ) {
-					$resource = $html->save();
+					$resource             = $html->save();
 					$this->markup[ $url ] = $resource;
 				} else {
 					WP_ConvertKit::log( 'Status Code (' . $response['response']['code'] . ') for URL (' . $url . '): ' . $html->save() );
 				}
 			} else {
-				WP_ConvertKit::log( 'API Response was WP_Error (get_resource): ' .
-									'Code: ' . $response->get_error_code() . ' ' .
-									'Message: ' . $response->get_error_message()
-				);
-			} // End if().
-		} // End if().
+				WP_ConvertKit::log( sprintf( 'API Response was WP_Error (get_resource): Code: %1$s Message: %2$s', $response->get_error_code(), $response->get_error_message() ) );
+			}
+		}
 
 		return $resource;
 	}
@@ -490,7 +525,9 @@ class ConvertKit_API {
 	/**
 	 * Do a remote request.
 	 *
-	 * @param string $path Part of URL.
+	 * @param string      $path Part of URL.
+	 * @param string|null $api_secret Optional, default null. API secret.
+	 *
 	 * @return array
 	 */
 	private function _get_api_response( $path = '', $api_secret = null ) {
@@ -504,14 +541,14 @@ class ConvertKit_API {
 		}
 
 		$api_path = $this->api_url_base . $this->api_version;
-		$url = add_query_arg( $args, path_join( $api_path, $path ) );
+		$url      = add_query_arg( $args, path_join( $api_path, $path ) );
 
 		$response = wp_remote_get(
 			$url,
 			array(
-				'timeout' => 10,
+				'timeout'         => 10,
 				'Accept-Encoding' => 'gzip',
-				'user-agent' => convertkit_wp_get_user_agent(),
+				'user-agent'      => convertkit_wp_get_user_agent(),
 			)
 		);
 
@@ -523,9 +560,13 @@ class ConvertKit_API {
 			);
 		} else {
 
-			// Maybe inflate response body.
-			// @see https://wordpress.stackexchange.com/questions/10088/how-do-i-troubleshoot-responses-with-wp-http-api
-			$inflate = @gzinflate( $response['body'] );
+			/**
+			 * Maybe inflate response body.
+			 *
+			 * @see https://wordpress.stackexchange.com/questions/10088/how-do-i-troubleshoot-responses-with-wp-http-api
+			 */
+			$inflate = @gzinflate( $response['body'] ); // phpcs:ignore -- @todo Determine a way to keep this functionality without suppressing errors and notices.
+
 			if ( $inflate ) {
 				$response['body'] = $inflate;
 			}
@@ -538,12 +579,11 @@ class ConvertKit_API {
 	}
 
 	/**
-	 * Make a request to the ConvertKit API
+	 * Make a request to the ConvertKit API.
 	 *
 	 * @param string $request Request string.
 	 * @param string $method HTTP Method.
 	 * @param array  $args Request arguments.
-	 * @return object Response object
 	 */
 	private function make_request( $request, $method, $args = array() ) {
 
